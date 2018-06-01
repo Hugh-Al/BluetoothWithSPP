@@ -52,14 +52,15 @@ public class MainActivity extends AppCompatActivity implements
         OnChartValueSelectedListener {
     BluetoothSPP bt;
     String TAG = "BluetoothArduinoApp";
-    boolean status = false;
+    boolean powerStatus = false;
     TextView dataRecording;
     ArrayList<String> dataLog; //Once record is pressed, all previous elements are cleared.
     ArrayList<String> allData;
     ArrayAdapter<String> adapter;
     Thread t;
     static Boolean recording = false;
-    Boolean power = false;
+    boolean power = false;
+    
     ListView listView;
     ImageView ledPowerStatus;
     LineChart mChart;
@@ -248,102 +249,57 @@ public class MainActivity extends AppCompatActivity implements
 
 
     public void recordData(View view){
-        // This is only simulation of turning on for 3 seconds, turn off for 1 second, turn on for 3 seconds
-        // need to send signal to turn on and off the lights whilst recording is always on going
-        if(!recording){
-            recording = true;
-            Toast.makeText(this, "Now recording: " + recording, Toast.LENGTH_SHORT).show();
-
-            dataLog.clear();
-            adapter.notifyDataSetChanged();
-            handler = new Handler();
-            handler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    recording = false;
-                    Toast.makeText(MainActivity.this, "3 seconds after, status is now " + recording, Toast.LENGTH_SHORT).show();
-                }
-            }, 3000);
-            handler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    recording = true;
-                    Toast.makeText(MainActivity.this, "4 seconds after, resume " + recording, Toast.LENGTH_SHORT).show();
-                }
-            }, 4000);
-            handler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    recording = false;
-                    Toast.makeText(MainActivity.this, "7 seconds after, stop " + recording, Toast.LENGTH_SHORT).show();
-                }
-            }, 7000);
-
-
-//            recording = false;
-//            handler.postDelayed(new Runnable() {
-//                @Override
-//                public void run() {
-//                    recording = true;
-//                }
-//            }, 2000);
-//            Toast.makeText(this, "Wait for one second" + recording, Toast.LENGTH_SHORT).show();
-//            recording = true;
-//            handler.postDelayed(new Runnable() {
-//                @Override
-//                public void run() {
-//                    recording = false;
-//                }
-//            }, 3000);
-//            Toast.makeText(this, "Recording for 3 seconds" + recording, Toast.LENGTH_SHORT).show();
-//            recording = false;
-//            new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-//                @Override
-//                public void run() {
-//                    recording = false;
-//                }
-//            }, 3000);
-//            dataLog.clear();
-//            adapter.notifyDataSetChanged();
-//            new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-//                @Override
-//                public void run() {
-//                    recording = true;
-//                }
-//            }, 2000);
-//            dataLog.clear();
-//            adapter.notifyDataSetChanged();
-//            new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-//                @Override
-//                public void run() {
-//                    recording = false;
-//                }
-//            }, 3000);
-//            new Handler().postDelayed(new Runnable() {
-//                @Override
-//                public void run() {
-//                    recording = false;
-//                }
-//            }, 3000);
-//            Toast.makeText(this, "Recording for 3 seconds and then delay for one second", Toast.LENGTH_SHORT).show();
-//            new Handler().postDelayed(new Runnable() {
-//                @Override
-//                public void run() {
-//                    recording = true;
-//                }
-//            }, 10000);
-//            Toast.makeText(this, "Resume recording for 3 seconds", Toast.LENGTH_SHORT).show();
-//            new Handler().postDelayed(new Runnable() {
-//                @Override
-//                public void run() {
-//                    recording = false;
-//                }
-//            }, 3000);
-//            Toast.makeText(this, "Done", Toast.LENGTH_SHORT).show();
-
+        if(!power){
+            Toast.makeText(this, "Please turn on power", Toast.LENGTH_SHORT).show();
         } else {
-            Toast.makeText(this, "Stop recording", Toast.LENGTH_SHORT).show();
-            recording = false;
+            // This is only simulation of turning on for 3 seconds, turn off for 1 second, turn on for 3 seconds
+            // need to send signal to turn on and off the lights whilst recording is always on going
+            if (!recording) {
+                recording = true;
+                bt.send("1", true);
+                Toast.makeText(this, "Now recording: " + recording, Toast.LENGTH_SHORT).show();
+
+                dataLog.clear();
+                adapter.notifyDataSetChanged();
+                handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        recording = false;
+                        bt.send("0", true);
+                        Toast.makeText(MainActivity.this, "3 seconds after, status is now " + recording, Toast.LENGTH_SHORT).show();
+                    }
+                }, 3000);
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        recording = true;
+                        bt.send("2", true);
+                        Toast.makeText(MainActivity.this, "4 seconds after, resume " + recording, Toast.LENGTH_SHORT).show();
+                    }
+                }, 4000);
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        recording = false;
+                        bt.send("0", true);
+                        Toast.makeText(MainActivity.this, "7 seconds after, stop " + recording, Toast.LENGTH_SHORT).show();
+                    }
+                }, 7000);
+                // When analysing, 810nm should generally be on. Only turned off for 5 seconds (1 sec delay, 3 sec 1300nm, 1 sec delay)
+                // Turns back on again
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        bt.send("1", true);
+                        Toast.makeText(MainActivity.this, "Turn 810nm back on " + recording, Toast.LENGTH_SHORT).show();
+                    }
+                }, 8000);
+
+            } else {
+                Toast.makeText(this, "Stop recording", Toast.LENGTH_SHORT).show();
+                recording = false;
+            }
         }
     }
 
