@@ -266,24 +266,40 @@ public class MainActivity extends AppCompatActivity implements
 //                Toast.makeText(MainActivity.this, "Status of recording is: " + recording, Toast.LENGTH_SHORT).show();
                 Toast.makeText(MainActivity.this, "Size of 810 array is: " + dataSet810.size() +
                         " size of 1300 array is: " + dataSet1300.size(), Toast.LENGTH_SHORT).show();
-                logData();
+//                logData();
             }
         });
     }
 
     private void logData() {
-        File dir = new File(Environment.getExternalStorageDirectory(), "/CSIOLOGGER2");
-        boolean dirValidity = false;
-        if(!dir.exists()){
-            dirValidity = dir.mkdir();
-            if (dirValidity) {
-                Toast.makeText(this, "Directory was created", Toast.LENGTH_SHORT).show();
-            } else{
-                Toast.makeText(this, "Not created", Toast.LENGTH_SHORT).show();
-            }
-        } else{ //Directory already created create new files
-
+        Toast.makeText(this, "Printing log data", Toast.LENGTH_SHORT).show();
+        File sdcard = Environment.getExternalStorageDirectory();
+        File root = new File(Environment.getExternalStorageDirectory(), "Loggerv4");
+        if (!root.exists()) {
+            root.mkdirs();
         }
+        try{
+            String time = Long.toString(System.currentTimeMillis()) + ".csv";
+            File csvFile = new File(root, time);
+
+            Toast.makeText(this, "making file", Toast.LENGTH_SHORT).show();
+
+            FileWriter writer = new FileWriter(csvFile);
+            String header = String.format("%s,%s, %s\n", "Data Point","810nm", "1300nm");
+            writer.write(header);
+            int size = Math.min(dataSet810.size(), dataSet1300.size());
+            for(int i = 0; i < size; i++){
+                //Maybe can change dataset into just arraylist with float instead of pair
+                String line = String.format("%d, %f, %f\n", i, dataSet810.get(i).second, dataSet1300.get(i).second);
+                writer.write(line);
+            }
+            writer.flush();
+            writer.close();
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+        Toast.makeText(this, "all good?", Toast.LENGTH_SHORT).show();
+
 
 //        if (!file.exists()) {
 //            try {
@@ -394,7 +410,12 @@ public class MainActivity extends AppCompatActivity implements
                         bt.send("1", true);
                         Toast.makeText(MainActivity.this, "Turn on 810nm but recording off" + recording, Toast.LENGTH_SHORT).show();
                     }
-                }, 10000);
+                }, 10000);handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        logData();
+                    }
+                }, 10700);
 
             } else {
                 Toast.makeText(this, "Stop recording", Toast.LENGTH_SHORT).show();
@@ -687,21 +708,21 @@ public class MainActivity extends AppCompatActivity implements
     public boolean onOptionsItemSelected(MenuItem item) {
 
         switch (item.getItemId()) {
-            case R.id.actionAdd: {
-//                addEntry();
-                Toast.makeText(this, "Add one!", Toast.LENGTH_SHORT).show();
-                break;
-            }
-            case R.id.actionClear: {
-                mChart.clearValues();
-                Toast.makeText(this, "Chart cleared!", Toast.LENGTH_SHORT).show();
-                break;
-            }
-            case R.id.actionFeedMultiple: {
-                Toast.makeText(this, "Add realtime!", Toast.LENGTH_SHORT).show();
-//                feedMultiple();
-                break;
-            }
+//            case R.id.actionAdd: {
+////                addEntry();
+//                Toast.makeText(this, "Add one!", Toast.LENGTH_SHORT).show();
+//                break;
+//            }
+//            case R.id.actionClear: {
+//                mChart.clearValues();
+//                Toast.makeText(this, "Chart cleared!", Toast.LENGTH_SHORT).show();
+//                break;
+//            }
+//            case R.id.actionFeedMultiple: {
+//                Toast.makeText(this, "Add realtime!", Toast.LENGTH_SHORT).show();
+////                feedMultiple();
+//                break;
+//            }
             case R.id.connectBluetooth:{
                 if(bt.getServiceState() == BluetoothState.STATE_CONNECTED) {
                     bt.disconnect();
