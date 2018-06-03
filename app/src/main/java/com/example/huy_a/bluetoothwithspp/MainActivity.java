@@ -5,11 +5,13 @@ import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
 import android.graphics.Color;
 import android.media.Image;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.Pair;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -38,6 +40,10 @@ import com.github.mikephil.charting.utils.ColorTemplate;
 
 import org.w3c.dom.Text;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
@@ -54,6 +60,7 @@ public class MainActivity extends AppCompatActivity implements
     String TAG = "BluetoothArduinoApp";
     boolean powerStatus = false;
     TextView dataRecording;
+
     ArrayList<String> dataLog; //Once record is pressed, all previous elements are cleared.
     ArrayList<String> allData;
     ArrayAdapter<String> adapter;
@@ -77,6 +84,12 @@ public class MainActivity extends AppCompatActivity implements
     boolean recordBlank = false;
     boolean recordBlank2 = false;
 
+    boolean record810Data = false;
+    boolean record1300Data = false;
+    ArrayList<Pair<Integer, Float>> dataSet810;
+    ArrayList<Pair<Integer, Float>> dataSet1300;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,9 +98,11 @@ public class MainActivity extends AppCompatActivity implements
         ledPowerStatus = (ImageView) findViewById(R.id.ledPowerStatus);
         ledPowerStatus.setImageResource(R.drawable.offled);
 
+        dataSet810 = new ArrayList<Pair<Integer, Float>>();
+        dataSet1300 = new ArrayList<Pair<Integer, Float>>();
 
         listView = (ListView) findViewById(R.id.listView);
-        dataRecording = (TextView) findViewById(R.id.dataRecording);
+//        dataRecording = (TextView) findViewById(R.id.dataRecording);
         dataLog = new ArrayList<String>();
         adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_list_item_1, dataLog);
@@ -157,11 +172,16 @@ public class MainActivity extends AppCompatActivity implements
         }
         bt.setOnDataReceivedListener(new BluetoothSPP.OnDataReceivedListener() {
             public void onDataReceived(byte[] data, String message) {
-                dataRecording.setText(message);
+//                dataRecording.setText(message);
                 if(recording){
                     addEntry((float) Float.parseFloat(message));
                     dataLog.add(message);
                     adapter.notifyDataSetChanged();
+                } else{
+                    if(power) {
+                        addEntry((float) Float.parseFloat(message));
+                    }
+
                 }
             }
         });
@@ -194,18 +214,18 @@ public class MainActivity extends AppCompatActivity implements
                     Log.d(TAG, "None");
             }
         });
-        Button btnConnect = (Button) findViewById(R.id.button);
-        btnConnect.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(bt.getServiceState() == BluetoothState.STATE_CONNECTED) {
-                    bt.disconnect();
-                } else {
-                    Intent intent = new Intent(getApplicationContext(), DeviceList.class);
-                    startActivityForResult(intent, BluetoothState.REQUEST_CONNECT_DEVICE);
-                }
-            }
-        });
+//        Button btnConnect = (Button) findViewById(R.id.button);
+//        btnConnect.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                if(bt.getServiceState() == BluetoothState.STATE_CONNECTED) {
+//                    bt.disconnect();
+//                } else {
+//                    Intent intent = new Intent(getApplicationContext(), DeviceList.class);
+//                    startActivityForResult(intent, BluetoothState.REQUEST_CONNECT_DEVICE);
+//                }
+//            }
+//        });
         Button powerButton = (Button) findViewById(R.id.button3);
         powerButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -217,6 +237,24 @@ public class MainActivity extends AppCompatActivity implements
                 } else {
                     power = false;
                     ledPowerStatus.setImageResource(R.drawable.offled);
+//                    data = mChart.getData();
+//                    if (data != null) {
+//                        data.clearValues();
+//                        data.notifyDataChanged();
+//                        mChart.notifyDataSetChanged();
+//                        mChart.invalidate();
+//                    }
+                    if(mChart.getData() == null){
+
+                    } else{
+                        mChart.clearValues();
+                        mChart.invalidate();
+//                        data = mChart.getData();
+//                        data.clearValues();
+//                        data.notifyDataChanged();
+//                        mChart.notifyDataSetChanged();
+//                        mChart.invalidate();
+                    }
                     bt.send("0", true);
                 }
             }
@@ -225,9 +263,66 @@ public class MainActivity extends AppCompatActivity implements
         plotButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(MainActivity.this, "Status of recording is: " + recording, Toast.LENGTH_SHORT).show();
+//                Toast.makeText(MainActivity.this, "Status of recording is: " + recording, Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "Size of 810 array is: " + dataSet810.size() +
+                        " size of 1300 array is: " + dataSet1300.size(), Toast.LENGTH_SHORT).show();
+                logData();
             }
         });
+    }
+
+    private void logData() {
+        File dir = new File(Environment.getExternalStorageDirectory(), "/CSIOLOGGER2");
+        boolean dirValidity = false;
+        if(!dir.exists()){
+            dirValidity = dir.mkdir();
+            if (dirValidity) {
+                Toast.makeText(this, "Directory was created", Toast.LENGTH_SHORT).show();
+            } else{
+                Toast.makeText(this, "Not created", Toast.LENGTH_SHORT).show();
+            }
+        } else{ //Directory already created create new files
+
+        }
+
+//        if (!file.exists()) {
+//            try {
+//                file.createNewFile();
+//                Toast.makeText(this, "Did it work?", Toast.LENGTH_SHORT).show();
+//
+//            } catch (IOException e) {
+//                if (file.exists()) try {
+//                    BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+//                    writer.write("Example");
+//                    writer.write("\n");
+//                    writer.write("Text");
+//                    writer.write("\n");
+//                    writer.flush();
+//                    writer.close();
+//                    Toast.makeText(this, "Did it work?", Toast.LENGTH_SHORT).show();
+//                } catch (IOException e1) {
+//                }
+//            }
+//        }
+    }
+
+    /* Checks if external storage is available for read and write */
+    public boolean isExternalStorageWritable() {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            return true;
+        }
+        return false;
+    }
+
+    /* Checks if external storage is available to at least read */
+    public boolean isExternalStorageReadable() {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state) ||
+                Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+            return true;
+        }
+        return false;
     }
 
 
@@ -235,21 +330,31 @@ public class MainActivity extends AppCompatActivity implements
         if(!power){
             Toast.makeText(this, "Please turn on power", Toast.LENGTH_SHORT).show();
         } else {
-            // This is only simulation of turning on for 3 seconds, turn off for 1 second, turn on for 3 seconds
-            // need to send signal to turn on and off the lights whilst recording is always on going
-            data = mChart.getData();
-            if (data != null) {
-                data.clearValues();
-                data.notifyDataChanged();
-                mChart.notifyDataSetChanged();
+            dataSet810.clear();
+            dataSet1300.clear();
+//            data = mChart.getData();
+//            if (data != null) {
+//                data.clearValues();
+//                data.notifyDataChanged();
+//                mChart.notifyDataSetChanged();
+//                mChart.invalidate();
+//            }
+            if(mChart.getData() == null){
+
+            } else{
+                mChart.clearValues();
                 mChart.invalidate();
+//                data = mChart.getData();
+//                data.clearValues();
+//                data.notifyDataChanged();
+//                mChart.notifyDataSetChanged();
+//                mChart.invalidate();
             }
 
             if (!recording) {
                 recording = true;
+                record810Data = true;
                 bt.send("1", true);
-//                Toast.makeText(this, "Now recording: " + recording, Toast.LENGTH_SHORT).show();
-
                 dataLog.clear();
                 adapter.notifyDataSetChanged();
                 handler = new Handler();
@@ -265,9 +370,9 @@ public class MainActivity extends AppCompatActivity implements
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-//                        recording = true;
                         recordBlank = false;
-
+                        record810Data = false;
+                        record1300Data = true;
                         bt.send("2", true);
                         Toast.makeText(MainActivity.this, "Turn on 1300nm now " + recording, Toast.LENGTH_SHORT).show();
                     }
@@ -275,18 +380,16 @@ public class MainActivity extends AppCompatActivity implements
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-//                        recording = false;
                         recordBlank2 = true;
                         bt.send("0", true);
                         Toast.makeText(MainActivity.this, "Turn off 1300nm " + recording, Toast.LENGTH_SHORT).show();
                     }
                 }, 8000);
-                // When analysing, 810nm should generally be on. Only turned off for 5 seconds (1 sec delay, 3 sec 1300nm, 1 sec delay)
-                // Turns back on again
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
                         recording = false;
+                        record1300Data = false;
                         recordBlank2 = false;
                         bt.send("1", true);
                         Toast.makeText(MainActivity.this, "Turn on 810nm but recording off" + recording, Toast.LENGTH_SHORT).show();
@@ -321,7 +424,14 @@ public class MainActivity extends AppCompatActivity implements
                 data.addEntry(new Entry(set.getEntryCount(), (float) Math.sin((double)Math.PI/2*3)-1), 0);
 
             } else{
-                data.addEntry(new Entry(set.getEntryCount(), (float) Math.sin((double)set.getEntryCount())), 0);
+                float value = (float) (Math.sin((double)set.getEntryCount()) + Math.random()/10);
+                data.addEntry(new Entry(set.getEntryCount(), value), 0);
+            }
+            if(record810Data){
+                dataSet810.add(new Pair(dataSet810.size(), (float) (Math.sin((double)set.getEntryCount()) + Math.random()/10)));
+            }
+            if(record1300Data){
+                dataSet1300.add(new Pair(dataSet1300.size(), (float) (Math.sin((double)set.getEntryCount()) + Math.random()/10)));
             }
 
 //            data.addEntry(new Entry(set.getEntryCount(), (float) input), 0);
@@ -551,6 +661,7 @@ public class MainActivity extends AppCompatActivity implements
         l.setTextColor(Color.WHITE);
 
         XAxis xl = mChart.getXAxis();
+
         xl.setTextColor(Color.WHITE);
         xl.setDrawGridLines(true);
         xl.setAvoidFirstLastClipping(true);
