@@ -38,7 +38,6 @@ import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 import com.github.mikephil.charting.utils.ColorTemplate;
 
-import org.w3c.dom.Text;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -98,11 +97,12 @@ public class MainActivity extends AppCompatActivity implements
         ledPowerStatus = (ImageView) findViewById(R.id.ledPowerStatus);
         ledPowerStatus.setImageResource(R.drawable.offled);
 
+
+        // Data container setup
         dataSet810 = new ArrayList<Pair<Integer, Float>>();
         dataSet1300 = new ArrayList<Pair<Integer, Float>>();
 
         listView = (ListView) findViewById(R.id.listView);
-//        dataRecording = (TextView) findViewById(R.id.dataRecording);
         dataLog = new ArrayList<String>();
         adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_list_item_1, dataLog);
@@ -111,58 +111,8 @@ public class MainActivity extends AppCompatActivity implements
 
         mChart = (LineChart) findViewById(R.id.chart);
         setupChart();
-//        mChart.setOnChartValueSelectedListener(this);
-//
-//        // enable description text
-//        mChart.getDescription().setEnabled(true);
-//
-//        // enable touch gestures
-//        mChart.setTouchEnabled(true);
-//
-//        // enable scaling and dragging
-//        mChart.setDragEnabled(true);
-//        mChart.setScaleEnabled(true);
-//        mChart.setDrawGridBackground(false);
-//
-//        // if disabled, scaling can be done on x- and y-axis separately
-//        mChart.setPinchZoom(false);
-//
-//        // set an alternative background color
-//        mChart.setBackgroundColor(Color.BLACK);
-//
-//        LineData data = new LineData();
-//        data.setValueTextColor(Color.WHITE);
-//
-//        // add empty data
-//        mChart.setData(data);
-//
-//        // get the legend (only possible after setting data)
-//        Legend l = mChart.getLegend();
-//
-//        // modify the legend ...
-//        l.setForm(LegendForm.LINE);
-//        l.setTextColor(Color.WHITE);
-//
-//        XAxis xl = mChart.getXAxis();
-//        xl.setTextColor(Color.WHITE);
-//        xl.setDrawGridLines(true);
-//        xl.setAvoidFirstLastClipping(true);
-//        xl.setEnabled(true);
-//
-//        YAxis leftAxis = mChart.getAxisLeft();
-//        leftAxis.setTextColor(Color.WHITE);
-////        leftAxis.setAxisMaximum(3000f);
-////        leftAxis.setAxisMinimum(2800f);
-//        leftAxis.setDrawGridLines(true);
-//
-//        YAxis rightAxis = mChart.getAxisRight();
-//        rightAxis.setEnabled(false);
 
-
-
-
-
-
+        // Bluetooth setup
         bt = new BluetoothSPP(this);
         if(!bt.isBluetoothAvailable()) {
             Toast.makeText(getApplicationContext()
@@ -172,7 +122,6 @@ public class MainActivity extends AppCompatActivity implements
         }
         bt.setOnDataReceivedListener(new BluetoothSPP.OnDataReceivedListener() {
             public void onDataReceived(byte[] data, String message) {
-//                dataRecording.setText(message);
                 if(recording){
                     addEntry((float) Float.parseFloat(message));
                     dataLog.add(message);
@@ -181,7 +130,6 @@ public class MainActivity extends AppCompatActivity implements
                     if(power) {
                         addEntry((float) Float.parseFloat(message));
                     }
-
                 }
             }
         });
@@ -214,18 +162,8 @@ public class MainActivity extends AppCompatActivity implements
                     Log.d(TAG, "None");
             }
         });
-//        Button btnConnect = (Button) findViewById(R.id.button);
-//        btnConnect.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                if(bt.getServiceState() == BluetoothState.STATE_CONNECTED) {
-//                    bt.disconnect();
-//                } else {
-//                    Intent intent = new Intent(getApplicationContext(), DeviceList.class);
-//                    startActivityForResult(intent, BluetoothState.REQUEST_CONNECT_DEVICE);
-//                }
-//            }
-//        });
+
+        // Adding functions to buttons
         Button powerButton = (Button) findViewById(R.id.button3);
         powerButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -237,23 +175,11 @@ public class MainActivity extends AppCompatActivity implements
                 } else {
                     power = false;
                     ledPowerStatus.setImageResource(R.drawable.offled);
-//                    data = mChart.getData();
-//                    if (data != null) {
-//                        data.clearValues();
-//                        data.notifyDataChanged();
-//                        mChart.notifyDataSetChanged();
-//                        mChart.invalidate();
-//                    }
                     if(mChart.getData() == null){
 
                     } else{
                         mChart.clearValues();
                         mChart.invalidate();
-//                        data = mChart.getData();
-//                        data.clearValues();
-//                        data.notifyDataChanged();
-//                        mChart.notifyDataSetChanged();
-//                        mChart.invalidate();
                     }
                     bt.send("0", true);
                 }
@@ -263,10 +189,9 @@ public class MainActivity extends AppCompatActivity implements
         plotButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                Toast.makeText(MainActivity.this, "Status of recording is: " + recording, Toast.LENGTH_SHORT).show();
+                // Used as unit testing function
                 Toast.makeText(MainActivity.this, "Size of 810 array is: " + dataSet810.size() +
                         " size of 1300 array is: " + dataSet1300.size(), Toast.LENGTH_SHORT).show();
-//                logData();
             }
         });
     }
@@ -298,28 +223,6 @@ public class MainActivity extends AppCompatActivity implements
         } catch (IOException e){
             e.printStackTrace();
         }
-        Toast.makeText(this, "all good?", Toast.LENGTH_SHORT).show();
-
-
-//        if (!file.exists()) {
-//            try {
-//                file.createNewFile();
-//                Toast.makeText(this, "Did it work?", Toast.LENGTH_SHORT).show();
-//
-//            } catch (IOException e) {
-//                if (file.exists()) try {
-//                    BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-//                    writer.write("Example");
-//                    writer.write("\n");
-//                    writer.write("Text");
-//                    writer.write("\n");
-//                    writer.flush();
-//                    writer.close();
-//                    Toast.makeText(this, "Did it work?", Toast.LENGTH_SHORT).show();
-//                } catch (IOException e1) {
-//                }
-//            }
-//        }
     }
 
     /* Checks if external storage is available for read and write */
@@ -343,28 +246,17 @@ public class MainActivity extends AppCompatActivity implements
 
 
     public void recordData(View view){
+        // TODO CLean up delay timers
         if(!power){
             Toast.makeText(this, "Please turn on power", Toast.LENGTH_SHORT).show();
         } else {
             dataSet810.clear();
             dataSet1300.clear();
-//            data = mChart.getData();
-//            if (data != null) {
-//                data.clearValues();
-//                data.notifyDataChanged();
-//                mChart.notifyDataSetChanged();
-//                mChart.invalidate();
-//            }
             if(mChart.getData() == null){
 
             } else{
                 mChart.clearValues();
                 mChart.invalidate();
-//                data = mChart.getData();
-//                data.clearValues();
-//                data.notifyDataChanged();
-//                mChart.notifyDataSetChanged();
-//                mChart.invalidate();
             }
 
             if (!recording) {
@@ -377,7 +269,6 @@ public class MainActivity extends AppCompatActivity implements
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-//                        recording = false;
                         recordBlank = true;
                         bt.send("0", true);
                         Toast.makeText(MainActivity.this, "Turn off 810nm now " + recording, Toast.LENGTH_SHORT).show();
@@ -425,19 +316,16 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void addEntry(float input) {
-
-//        LineData data = mChart.getData();
+        //TODO Clearn up flags
         data = mChart.getData();
         if (data != null) {
 
             ILineDataSet set = data.getDataSetByIndex(0);
-            // set.addEntry(...); // can be called as well
-
             if (set == null) {
                 set = createSet();
                 data.addDataSet(set);
             }
-            //TODO Add this x value as time??? so we can distinguish which sections?
+
             if(recordBlank){
                 data.addEntry(new Entry(set.getEntryCount(), (float) Math.sin((double)Math.PI/2*3)-1), 0);
 
@@ -467,56 +355,8 @@ public class MainActivity extends AppCompatActivity implements
 
             // move to the latest entry
             mChart.moveViewToX(data.getEntryCount());
-
-            // this automatically refreshes the chart (calls invalidate())
-            // mChart.moveViewTo(data.getXValCount()-7, 55f,
-            // AxisDependency.LEFT);
         }
     }
-
-//    //Thiz is for fake data
-//    private void addEntry() {
-//
-////        LineData data = mChart.getData();
-//        data = mChart.getData();
-//
-//        if (data != null) {
-//
-//            ILineDataSet set = data.getDataSetByIndex(0);
-//            // set.addEntry(...); // can be called as well
-//
-//            if (set == null) {
-//                set = createSet();
-//                data.addDataSet(set);
-//            }
-//
-//            data.addEntry(new Entry(set.getEntryCount(), (float) (Math.random() * 40) + 30f), 0);
-//            data.notifyDataChanged();
-////            bt.setOnDataReceivedListener(new BluetoothSPP.OnDataReceivedListener() {
-////                public void onDataReceived(byte[] data, String message) {
-////                    dataRecording.setText(message);
-////                    if(recording){
-////                        dataLog.add(message);
-////                        adapter.notifyDataSetChanged();
-////                    }
-////                }
-////            });
-//
-//            // let the chart know it's data has changed
-//            mChart.notifyDataSetChanged();
-//
-//            // limit the number of visible entries
-//            mChart.setVisibleXRangeMaximum(120);
-//            // mChart.setVisibleYRange(30, AxisDependency.LEFT);
-//
-//            // move to the latest entry
-//            mChart.moveViewToX(data.getEntryCount());
-//
-//            // this automatically refreshes the chart (calls invalidate())
-//            // mChart.moveViewTo(data.getXValCount()-7, 55f,
-//            // AxisDependency.LEFT);
-//        }
-//    }
 
     private LineDataSet createSet() {
 
@@ -524,70 +364,15 @@ public class MainActivity extends AppCompatActivity implements
         set.setDrawCircles(false);
         set.setAxisDependency(AxisDependency.LEFT);
         set.setColor(ColorTemplate.getHoloBlue());
-//        set.setCircleColor(Color.WHITE);
         set.setLineWidth(2f);
-//        set.setCircleRadius(4f);
         set.setFillAlpha(65);
         set.setFillColor(ColorTemplate.getHoloBlue());
-//        set.setHighLightColor(Color.rgb(244, 117, 117));
         set.setValueTextColor(Color.WHITE);
         set.setValueTextSize(9f);
         set.setDrawValues(false);
         return set;
     }
 
-//    private Thread thread;
-//
-//    private void feedMultiple() {
-//
-//        if (thread != null)
-//            thread.interrupt();
-//
-//        final Runnable runnable = new Runnable() {
-//
-//            @Override
-//            public void run() {
-//                addEntry();
-//            }
-//        };
-//
-//        thread = new Thread(new Runnable() {
-//
-//            @Override
-//            public void run() {
-//                //TODO a 7 second timer loop here,
-//                // TODO Turn on 810nm, loop 3 seconds and record. Pause one second
-//                // TODO turn off 810nm and turn on 1300nm.
-//                //TODO loop for another 3 seconds
-//                Long firstStop = System.currentTimeMillis() + 3000;
-//                while(System.currentTimeMillis() < firstStop) {
-//                    runOnUiThread(runnable);
-//                    try {
-//                        Thread.sleep(5);
-//                    } catch (InterruptedException e){
-//                        e.printStackTrace();
-//                    }
-//                }
-//                bt.send("0", true);
-//                try {
-//                    Thread.sleep(1000);
-//                } catch (InterruptedException e){
-//                    e.printStackTrace();
-//                }
-//                Long secondStop = System.currentTimeMillis() + 3000;
-//                while(System.currentTimeMillis() < secondStop) {
-//                    runOnUiThread(runnable);
-//                    try {
-//                        Thread.sleep(5);
-//                    } catch (InterruptedException e){
-//                        e.printStackTrace();
-//                    }
-//                }
-//            }
-//        });
-//
-//        thread.start();
-//    }
 
     @Override
     public void onValueSelected(Entry e, Highlight h) {
@@ -599,22 +384,10 @@ public class MainActivity extends AppCompatActivity implements
         Log.i("Nothing selected", "Nothing selected.");
     }
 
-//    @Override
-//    protected void onPause() {
-//        super.onPause();
-//
-//        if (thread != null) {
-//            thread.interrupt();
-//        }
-//    }
-
-
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
         Log.d(TAG, "resultCode: " + resultCode);
-
 
         if(requestCode == BluetoothState.REQUEST_CONNECT_DEVICE) {
             if(resultCode == Activity.RESULT_OK)
@@ -623,7 +396,6 @@ public class MainActivity extends AppCompatActivity implements
             if(resultCode == Activity.RESULT_OK) {
                 bt.setupService();
                 bt.startService(BluetoothState.DEVICE_OTHER);
-//                setup();
             } else {
                 Toast.makeText(getApplicationContext()
                         , "Bluetooth was not enabled."
@@ -643,7 +415,6 @@ public class MainActivity extends AppCompatActivity implements
             if(!bt.isServiceAvailable()) {
                 bt.setupService();
                 bt.startService(BluetoothState.DEVICE_OTHER);
-                //setup(); // Do I need this?
             }
         }
     }
@@ -662,7 +433,6 @@ public class MainActivity extends AppCompatActivity implements
         mChart.setScaleEnabled(true);
         mChart.setDrawGridBackground(false);
 
-        // if disabled, scaling can be done on x- and y-axis separately
         mChart.setPinchZoom(false);
 
         // set an alternative background color
@@ -690,8 +460,6 @@ public class MainActivity extends AppCompatActivity implements
 
         YAxis leftAxis = mChart.getAxisLeft();
         leftAxis.setTextColor(Color.WHITE);
-//        leftAxis.setAxisMaximum(3000f);
-//        leftAxis.setAxisMinimum(2800f);
         leftAxis.setDrawGridLines(true);
 
         YAxis rightAxis = mChart.getAxisRight();
@@ -708,21 +476,6 @@ public class MainActivity extends AppCompatActivity implements
     public boolean onOptionsItemSelected(MenuItem item) {
 
         switch (item.getItemId()) {
-//            case R.id.actionAdd: {
-////                addEntry();
-//                Toast.makeText(this, "Add one!", Toast.LENGTH_SHORT).show();
-//                break;
-//            }
-//            case R.id.actionClear: {
-//                mChart.clearValues();
-//                Toast.makeText(this, "Chart cleared!", Toast.LENGTH_SHORT).show();
-//                break;
-//            }
-//            case R.id.actionFeedMultiple: {
-//                Toast.makeText(this, "Add realtime!", Toast.LENGTH_SHORT).show();
-////                feedMultiple();
-//                break;
-//            }
             case R.id.connectBluetooth:{
                 if(bt.getServiceState() == BluetoothState.STATE_CONNECTED) {
                     bt.disconnect();
