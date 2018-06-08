@@ -17,6 +17,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -69,6 +70,7 @@ public class MainActivity extends AppCompatActivity implements
     
     ListView listView;
     ImageView ledPowerStatus;
+    ImageView led810, led1300;
     LineChart mChart;
     LineChart lineChart2;
     ArrayList<Entry> tempArray = new ArrayList<Entry>();
@@ -79,6 +81,8 @@ public class MainActivity extends AppCompatActivity implements
     public LineData blueData;
 
     Handler handler;
+
+    EditText recordingTime;
 
     boolean recordBlank = false;
     boolean recordBlank2 = false;
@@ -96,19 +100,24 @@ public class MainActivity extends AppCompatActivity implements
         setContentView(R.layout.activity_main);
         ledPowerStatus = (ImageView) findViewById(R.id.ledPowerStatus);
         ledPowerStatus.setImageResource(R.drawable.offled);
+        led810 = (ImageView) findViewById(R.id.led810);
+        led1300 =(ImageView) findViewById(R.id.led1300);
+        led810.setImageResource(R.drawable.offled);
+        led1300.setImageResource(R.drawable.offled);
+
 
 
         // Data container setup
         dataSet810 = new ArrayList<Pair<Integer, Float>>();
         dataSet1300 = new ArrayList<Pair<Integer, Float>>();
 
-        listView = (ListView) findViewById(R.id.listView);
-        dataLog = new ArrayList<String>();
-        adapter = new ArrayAdapter<String>(this,
-                android.R.layout.simple_list_item_1, dataLog);
-        listView.setAdapter(adapter);
+//        listView = (ListView) findViewById(R.id.listView);
+//        dataLog = new ArrayList<String>();
+//        adapter = new ArrayAdapter<String>(this,
+//                android.R.layout.simple_list_item_1, dataLog);
+//        listView.setAdapter(adapter);
 
-
+        recordingTime = (EditText) findViewById(R.id.recordingTime);
         mChart = (LineChart) findViewById(R.id.chart);
         setupChart();
 
@@ -124,8 +133,8 @@ public class MainActivity extends AppCompatActivity implements
             public void onDataReceived(byte[] data, String message) {
                 if(recording){
                     addEntry((float) Float.parseFloat(message));
-                    dataLog.add(message);
-                    adapter.notifyDataSetChanged();
+//                    dataLog.add(message);
+//                    adapter.notifyDataSetChanged();
                 } else{
                     if(power) {
                         addEntry((float) Float.parseFloat(message));
@@ -164,6 +173,7 @@ public class MainActivity extends AppCompatActivity implements
         });
 
         // Adding functions to buttons
+        // TODO if bluetooth not connected, turn off image
         Button powerButton = (Button) findViewById(R.id.button3);
         powerButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -171,10 +181,12 @@ public class MainActivity extends AppCompatActivity implements
                 if(!power){
                     power = true;
                     ledPowerStatus.setImageResource(R.drawable.redled);
+                    led810.setImageResource(R.drawable.redled);
                     bt.send("1", true);
                 } else {
                     power = false;
                     ledPowerStatus.setImageResource(R.drawable.offled);
+                    led810.setImageResource(R.drawable.offled);
                     if(mChart.getData() == null){
 
                     } else{
@@ -250,6 +262,11 @@ public class MainActivity extends AppCompatActivity implements
         if(!power){
             Toast.makeText(this, "Please turn on power", Toast.LENGTH_SHORT).show();
         } else {
+            // TODO validate recordingTime.getText data to ensure it is a valid input (integer)
+            // TODO Create additional edittext to allow for variable sampling rate/or some options
+            Integer timer = Integer.parseInt(recordingTime.getText().toString());
+            int milliSecTimer = timer * 1000;
+            int milliSecDelay = 2000;
             dataSet810.clear();
             dataSet1300.clear();
             if(mChart.getData() == null){
@@ -263,7 +280,7 @@ public class MainActivity extends AppCompatActivity implements
                 recording = true;
                 record810Data = true;
                 bt.send("1", true);
-                dataLog.clear();
+//                dataLog.clear();
                 adapter.notifyDataSetChanged();
                 handler = new Handler();
                 handler.postDelayed(new Runnable() {
@@ -271,9 +288,10 @@ public class MainActivity extends AppCompatActivity implements
                     public void run() {
                         recordBlank = true;
                         bt.send("0", true);
+                        led810.setImageResource(R.drawable.offled);
                         Toast.makeText(MainActivity.this, "Turn off 810nm now " + recording, Toast.LENGTH_SHORT).show();
                     }
-                }, 3000);
+                }, milliSecTimer);
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
@@ -281,17 +299,19 @@ public class MainActivity extends AppCompatActivity implements
                         record810Data = false;
                         record1300Data = true;
                         bt.send("2", true);
+                        led1300.setImageResource(R.drawable.purpleled);
                         Toast.makeText(MainActivity.this, "Turn on 1300nm now " + recording, Toast.LENGTH_SHORT).show();
                     }
-                }, 5000);
+                }, milliSecTimer+milliSecDelay);
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
                         recordBlank2 = true;
                         bt.send("0", true);
+                        led1300.setImageResource(R.drawable.offled);
                         Toast.makeText(MainActivity.this, "Turn off 1300nm " + recording, Toast.LENGTH_SHORT).show();
                     }
-                }, 8000);
+                }, 2*milliSecTimer+milliSecDelay);
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
@@ -299,14 +319,15 @@ public class MainActivity extends AppCompatActivity implements
                         record1300Data = false;
                         recordBlank2 = false;
                         bt.send("1", true);
+                        led810.setImageResource(R.drawable.redled);
                         Toast.makeText(MainActivity.this, "Turn on 810nm but recording off" + recording, Toast.LENGTH_SHORT).show();
                     }
-                }, 10000);handler.postDelayed(new Runnable() {
+                }, 2*(milliSecDelay+milliSecTimer));handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
                         logData();
                     }
-                }, 10700);
+                }, 2*(milliSecDelay+milliSecTimer) + 700);
 
             } else {
                 Toast.makeText(this, "Stop recording", Toast.LENGTH_SHORT).show();
@@ -316,7 +337,7 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void addEntry(float input) {
-        //TODO Clearn up flags
+        //TODO Clean up flags
         data = mChart.getData();
         if (data != null) {
 
